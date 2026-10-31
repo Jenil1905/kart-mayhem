@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Kart Mayhem - 3D Multiplayer Kart Combat</title>
+  <meta name="description" content="Kart Mayhem is an adrenaline-fueled 3D arcade multiplayer kart combat battle game. Grab mystery power-ups, drift for turbo boosts, fire homing missiles, and blast your friends!" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Chakra+Petch:wght@500;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- 3D Canvas Container -->
+  <div id="game-container">
+    <canvas id="three-canvas"></canvas>
+  </div>
+
+  <!-- SPEED LINES OVERLAY FOR BOOST -->
+  <div id="speed-lines"></div>
+
+  <!-- HIT VIGNETTE -->
+  <div id="hit-vignette"></div>
+
+  <!-- FLOATING DAMAGE NUMBERS LAYER -->
+  <div id="damage-numbers-layer"></div>
+
+  <!-- TOP HUD - SMASH KARTS AUTHENTIC LAYOUT -->
+  <div id="hud" class="hud-overlay hidden">
+    <!-- Top Left: Rank Capsule & Pilot Level Banner -->
+    <div class="hud-section hud-top-left">
+      <div class="sk-pill sk-rank-pill">
+        <div class="sk-rank-icon-bubble">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#ffffff"><path d="M5 3h14v2H5V3zm2 4h10v2H7V7zm-2 4h14v2H5v-2zm-2 4h18v6H3v-6z"/></svg>
+        </div>
+        <span class="sk-rank-text" id="hud-rank-text">1<sup>st</sup> / 1</span>
+      </div>
+
+      <div class="sk-banner sk-pilot-banner">
+        <div class="sk-level-badge" id="hud-level-badge">
+          <span class="sk-lvl-num">29</span>
+        </div>
+        <div class="sk-pilot-name" id="hud-pilot-name">SpeedRacer</div>
+        <div class="sk-score-bubble" id="hud-score">0</div>
+      </div>
+    </div>
+
+    <!-- Top Center: Heart HP Capsule & Match Timer Capsule -->
+    <div class="hud-section hud-top-center">
+      <div class="sk-pill sk-hp-pill">
+        <div class="sk-heart-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="#ffffff" stroke="#0288d1" stroke-width="2.5"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        </div>
+        <div class="sk-hp-track">
+          <div class="sk-hp-fill" id="hud-hp-bar" style="width: 100%;"></div>
+        </div>
+        <span class="sk-hp-val" id="hud-hp-text">100</span>
+      </div>
+
+      <div class="sk-pill sk-timer-pill">
+        <div class="sk-clock-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="#ffffff"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2  11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+        </div>
+        <span class="sk-timer-val" id="hud-timer">180</span>
+      </div>
+    </div>
+
+    <!-- Top Right: 4 Circular Blue Utility Buttons & Net Stats -->
+    <div class="hud-section hud-top-right">
+      <div class="sk-utility-buttons">
+        <button class="sk-round-btn" id="sk-mode-btn" title="Toggle Speed / Cam Mode">1x</button>
+        <button class="sk-round-btn" id="hud-copy-link-btn" title="Party / Copy Invite Link">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        </button>
+        <button class="sk-round-btn" id="sk-sound-toggle-btn" title="Sound Mute/Unmute">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+        </button>
+        <button class="sk-round-btn" id="sk-settings-btn" title="Settings / Menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+        </button>
+      </div>
+
+      <div class="sk-net-stats">
+        <div class="sk-stat-line">FPS: <span id="sk-fps-val">60</span></div>
+        <div class="sk-stat-line">PING: <span id="sk-ping-val">28</span></div>
+      </div>
+
+      <div id="hud-room-pill" class="sk-room-hud-badge">
+        <span class="room-pill-icon">ROOM:</span>
+        <span id="hud-room-code">----</span>
+        <button id="hud-room-copy-btn" class="room-pill-copy" title="Copy Invite Link">📋</button>
+      </div>
+      <div id="hud-kills" class="hidden">0</div>
+
+      <div id="killfeed-container" class="killfeed-list"></div>
+    </div>
+
+    <!-- Bottom Left: Minimap Radar & Controls Hint -->
+    <div class="hud-section hud-bottom-left">
+      <div class="minimap-panel glass-panel">
+        <canvas id="minimap-canvas" width="150" height="150"></canvas>
+      </div>
+      <div class="sk-drift-bar-wrap">
+        <div class="sk-drift-label">TURBO DRIFT</div>
+        <div class="sk-drift-track">
+          <div class="sk-drift-fill" id="drift-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden compatibility elements for UI manager -->
+    <div id="speed-display" class="hidden">0</div>
+    <!-- Active Weapon Banner HUD (Always clearly displays current power, ammo, and fire prompt) -->
+    <div id="weapon-slot" class="sk-weapon-hud-card">
+      <div class="sk-weapon-icon-box">
+        <span id="weapon-symbol" class="sk-weapon-sym">?</span>
+      </div>
+      <div class="sk-weapon-info">
+        <div class="sk-weapon-name-row">
+          <span id="weapon-name" class="sk-weapon-name">NO WEAPON</span>
+          <span id="weapon-ammo-badge" class="sk-weapon-ammo-pill hidden">
+            AMMO: <span id="weapon-ammo-count">1</span>
+          </span>
+        </div>
+        <div id="weapon-hint" class="sk-weapon-hint">DRIVE INTO [?] ITEM BOX</div>
+      </div>
+    </div>
+
+    <!-- Bottom Right: Authentic Smash Karts Circular Action / Fire Button -->
+    <div class="hud-section hud-bottom-right-action">
+      <button class="sk-action-fire-btn" id="sk-action-btn" title="Fire Weapon / Boost [SPACE / E]">
+        <div class="sk-action-art" id="sk-action-art">
+          <!-- Clean empty weapon state (No confusing gas cloud) -->
+          <div class="sk-empty-slot-art">
+            <span class="sk-empty-qmark">?</span>
+            <span class="sk-empty-sub">HIT BOX</span>
+          </div>
+        </div>
+        <div class="sk-action-ammo-badge hidden" id="sk-ammo-badge">1</div>
+      </button>
+    </div>
+
+    <!-- Center Screen Alerts -->
+    <div id="center-alert" class="center-alert"></div>
+  </div>
+
+  <!-- MAIN MENU / LOBBY MODAL -->
+  <div id="menu-overlay" class="menu-overlay">
+    <div class="menu-card glass-panel-heavy">
+      <!-- Header / Logo -->
+      <div class="menu-header">
+        <div class="game-badge">3D MULTIPLAYER COMBAT</div>
+        <h1 class="game-title">
+          <span class="title-kart">KART</span>
+          <span class="title-mayhem">MAYHEM</span>
+        </h1>
+        <p class="game-subtitle">Drift. Blast. Outrun. Rule the Arena.</p>
+      </div>
+
+      <!-- Kart Customization Section -->
+      <div class="customizer-section">
+        <label class="input-label">PILOT ALIAS</label>
+        <div class="alias-input-wrapper">
+          <input type="text" id="player-name-input" maxlength="15" placeholder="Enter Pilot Name" value="SpeedRacer" />
+          <button id="random-name-btn" title="Randomize Name">🎲</button>
+        </div>
+
+        <label class="input-label">KART COLOR</label>
+        <div class="color-palette" id="color-palette">
+          <button class="color-swatch active" data-color="#ff0055" style="--c: #ff0055;"></button>
+          <button class="color-swatch" data-color="#00e5ff" style="--c: #00e5ff;"></button>
+          <button class="color-swatch" data-color="#39ff14" style="--c: #39ff14;"></button>
+          <button class="color-swatch" data-color="#ffea00" style="--c: #ffea00;"></button>
+          <button class="color-swatch" data-color="#9d00ff" style="--c: #9d00ff;"></button>
+          <button class="color-swatch" data-color="#ff6600" style="--c: #ff6600;"></button>
+          <button class="color-swatch" data-color="#00ffaa" style="--c: #00ffaa;"></button>
+          <button class="color-swatch" data-color="#ffffff" style="--c: #ffffff;"></button>
+        </div>
+
+        <label class="input-label">DRIVER CHARACTER</label>
+        <div class="character-selector" id="character-selector">
+          <button class="char-choice active" data-char="alien" title="Alien">👽 Alien</button>
+          <button class="char-choice" data-char="cat" title="Cat">🐱 Cat</button>
+          <button class="char-choice" data-char="frog" title="Frog">🐸 Frog</button>
+          <button class="char-choice" data-char="ninja" title="Ninja">🥷 Ninja</button>
+          <button class="char-choice" data-char="racer" title="Racer">🏎️ Racer</button>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons-group">
+        <button id="quick-play-btn" class="btn btn-primary btn-glow">
+          <span class="btn-icon">⚡</span>
+          <span class="btn-text">QUICK PLAY</span>
+        </button>
+
+        <div class="secondary-actions">
+          <button id="create-room-btn" class="btn btn-secondary">
+            <span>➕ Create Room</span>
+          </button>
+          <button id="join-room-modal-btn" class="btn btn-secondary">
+            <span>🔑 Join Room</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- How to play controls -->
+      <div class="controls-cheatsheet">
+        <div class="ctrl-col"><span class="key-cap">W A S D / ⬆ ⬅ ⬇ ➡</span> Drive & Steer</div>
+        <div class="ctrl-col"><span class="key-cap">SHIFT / SPACE</span> Power Drift</div>
+        <div class="ctrl-col"><span class="key-cap">E / CLICK</span> Fire Weapon</div>
+      </div>
+
+      <!-- Sound toggle in menu -->
+      <div class="menu-footer">
+        <button id="sound-toggle-btn" class="text-btn">🔊 Sound: ON</button>
+        <span class="footer-divider">•</span>
+        <button id="how-to-play-btn" class="text-btn">📖 Weapons Guide</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOIN ROOM MODAL -->
+  <div id="join-modal" class="modal-backdrop hidden">
+    <div class="modal-card glass-panel-heavy">
+      <h2>JOIN BATTLE ROOM</h2>
+      <p>Enter the 4-letter room code shared by your friend:</p>
+      <input type="text" id="join-code-input" maxlength="6" placeholder="ROOM CODE" />
+      <div class="modal-actions">
+        <button id="confirm-join-btn" class="btn btn-primary">JOIN MATCH</button>
+        <button id="cancel-join-btn" class="btn btn-secondary">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROOM CREATED MODAL -->
+  <div id="room-created-modal" class="modal-backdrop hidden">
+    <div class="modal-card room-created-card glass-panel-heavy">
+      <h2>🎉 ROOM CREATED!</h2>
+      <p>Share this code or invite link with friends to battle together in the same arena:</p>
+      <div class="room-code-display-wrap">
+        <span class="room-code-label">ROOM CODE</span>
+        <div id="created-room-code-badge" class="room-code-big-badge">----</div>
+      </div>
+      <div class="room-link-wrap">
+        <input type="text" id="created-room-link-input" readonly class="room-link-input" />
+        <button id="copy-created-room-link-btn" class="btn btn-secondary btn-copy">📋 Copy Link</button>
+      </div>
+      <div id="created-room-toast" class="copy-feedback-toast hidden">✓ Invite link copied to clipboard!</div>
+      <div class="modal-actions full-width-action">
+        <button id="start-created-room-btn" class="btn btn-primary btn-glow">🚀 ENTER BATTLE NOW</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WEAPONS GUIDE MODAL -->
+  <div id="guide-modal" class="modal-backdrop hidden">
+    <div class="modal-card guide-card glass-panel-heavy">
+      <h2>ARENA ARSENAL & WEAPONS</h2>
+      <div class="weapons-grid">
+        <div class="weapon-guide-item">
+          <div class="wg-icon">🚀</div>
+          <div class="wg-desc">
+            <strong>Homing Missile</strong>
+            <p>Locks on and chases nearest kart ahead. High damage & launch knockback!</p>
+          </div>
+        </div>
+        <div class="weapon-guide-item">
+          <div class="wg-icon">💣</div>
+          <div class="wg-desc">
+            <strong>Bouncing Bomb</strong>
+            <p>Lobbed forward in an arc, bounces 3 times before massive blast.</p>
+          </div>
+        </div>
+        <div class="weapon-guide-item">
+          <div class="wg-icon">⚡</div>
+          <div class="wg-desc">
+            <strong>Laser Gatling</strong>
+            <p>Rapid-fire neon beam barrage (15 rounds). Shreds enemy health!</p>
+          </div>
+        </div>
+        <div class="weapon-guide-item">
+          <div class="wg-icon">⭐</div>
+          <div class="wg-desc">
+            <strong>Super Star Boost</strong>
+            <p>5 seconds invulnerability & blazing speed. Ram enemies to smash them!</p>
+          </div>
+        </div>
+        <div class="weapon-guide-item">
+          <div class="wg-icon">💥</div>
+          <div class="wg-desc">
+            <strong>Spiked Mine</strong>
+            <p>Drops behind you. Detonates when unsuspecting rivals drive near.</p>
+          </div>
+        </div>
+        <div class="weapon-guide-item">
+          <div class="wg-icon">🏎️💨</div>
+          <div class="wg-desc">
+            <strong>Drift Turbo</strong>
+            <p>Hold Shift while steering to build sparks. Release for instant turbo surge!</p>
+          </div>
+        </div>
+      </div>
+      <button id="close-guide-btn" class="btn btn-primary">READY TO SMASH</button>
+    </div>
+  </div>
+
+  <!-- VICTORY / PODIUM OVERLAY -->
+  <div id="podium-overlay" class="modal-backdrop hidden">
+    <div class="podium-card glass-panel-heavy">
+      <div class="podium-header">
+        <h2 id="podium-title">MATCH COMPLETED!</h2>
+        <p>Final Arena Standings</p>
+      </div>
+
+      <div class="podium-stage">
+        <!-- 2nd Place -->
+        <div class="podium-pillar pillar-2" id="podium-p2">
+          <div class="pillar-crown">🥈</div>
+          <div class="pillar-kart" id="p2-name">--</div>
+          <div class="pillar-score" id="p2-score">0 pts</div>
+          <div class="pillar-block">2</div>
+        </div>
+        <!-- 1st Place -->
+        <div class="podium-pillar pillar-1" id="podium-p1">
+          <div class="pillar-crown">👑</div>
+          <div class="pillar-kart" id="p1-name">--</div>
+          <div class="pillar-score" id="p1-score">0 pts</div>
+          <div class="pillar-block">1</div>
+        </div>
+        <!-- 3rd Place -->
+        <div class="podium-pillar pillar-3" id="podium-p3">
+          <div class="pillar-crown">🥉</div>
+          <div class="pillar-kart" id="p3-name">--</div>
+          <div class="pillar-score" id="p3-score">0 pts</div>
+          <div class="pillar-block">3</div>
+        </div>
+      </div>
+
+      <div class="podium-table-wrapper">
+        <table class="leaderboard-table" id="podium-table">
+          <thead>
+            <tr>
+              <th>RANK</th>
+              <th>PILOT</th>
+              <th>KILLS</th>
+              <th>DEATHS</th>
+              <th>SCORE</th>
+            </tr>
+          </thead>
+          <tbody id="podium-table-body"></tbody>
+        </table>
+      </div>
+
+      <div class="podium-footer">
+        <p class="restart-timer-hint">Next round starting automatically in <span id="restart-countdown">10</span>s...</p>
+        <button id="podium-lobby-btn" class="btn btn-secondary">RETURN TO LOBBY</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FULL TAB LEADERBOARD OVERLAY -->
+  <div id="tab-leaderboard" class="tab-leaderboard-overlay hidden">
+    <div class="tab-leaderboard-card glass-panel-heavy">
+      <h3>ARENA LEADERBOARD</h3>
+      <table class="leaderboard-table">
+        <thead>
+          <tr>
+            <th>PILOT</th>
+            <th>KILLS</th>
+            <th>DEATHS</th>
+            <th>SCORE</th>
+          </tr>
+        </thead>
+        <tbody id="tab-leaderboard-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ENTRY SCRIPT -->
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
