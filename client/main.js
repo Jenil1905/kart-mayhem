@@ -172,6 +172,12 @@ class KartMayhemClient {
       if (p.type === 'ROCKET') sounds.playRocketLaunch();
       else if (p.type === 'GATLING') sounds.playGatlingShot();
       else if (p.type === 'BOMB') sounds.playBoostWhoosh();
+      else if (p.type === 'MINE') sounds.playBoostWhoosh();
+
+      // Zero-latency instant visual rendering
+      if (this.weaponVisuals) {
+        this.weaponVisuals.addOrUpdateProjectile(p, this.myId);
+      }
     });
 
     this.socket.on('projectile_exploded', (data) => {

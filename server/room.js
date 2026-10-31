@@ -245,6 +245,8 @@ export class GameRoom {
       return;
     }
 
+    const kartElevation = Math.max(0, kart.y || 0);
+
     if (weaponType === WEAPON_TYPES.MINE) {
       // Deploy all 3 mines together in a spread cluster behind kart
       const forwardX = Math.sin(kart.rotY);
@@ -262,6 +264,7 @@ export class GameRoom {
         const projId = `mine_${this.nextProjId++}`;
         const mx = kart.x - forwardX * offset.back + rightX * offset.side;
         const mz = kart.z - forwardZ * offset.back + rightZ * offset.side;
+        const my = kartElevation + 0.25;
 
         this.projectiles.set(projId, {
           id: projId,
@@ -269,7 +272,7 @@ export class GameRoom {
           ownerId: kart.id,
           ownerName: kart.name,
           x: mx,
-          y: 0.2,
+          y: my,
           z: mz,
           vx: 0,
           vy: 0,
@@ -286,7 +289,7 @@ export class GameRoom {
           type: WEAPON_TYPES.MINE,
           ownerId: kart.id,
           x: mx,
-          y: 0.2,
+          y: my,
           z: mz
         });
       }
@@ -302,14 +305,18 @@ export class GameRoom {
 
     if (weaponType === WEAPON_TYPES.ROCKET) {
       const projId = `rocket_${this.nextProjId++}`;
+      const spawnX = kart.x + forwardX * 2.2;
+      const spawnY = kartElevation + 0.85;
+      const spawnZ = kart.z + forwardZ * 2.2;
+
       this.projectiles.set(projId, {
         id: projId,
         type: WEAPON_TYPES.ROCKET,
         ownerId: kart.id,
         ownerName: kart.name,
-        x: kart.x + forwardX * 2.2,
-        y: 0.8,
-        z: kart.z + forwardZ * 2.2,
+        x: spawnX,
+        y: spawnY,
+        z: spawnZ,
         vx: forwardX * config.speed,
         vy: 0,
         vz: forwardZ * config.speed,
@@ -325,9 +332,9 @@ export class GameRoom {
         id: projId,
         type: WEAPON_TYPES.ROCKET,
         ownerId: kart.id,
-        x: kart.x + forwardX * 2.2,
-        y: 0.8,
-        z: kart.z + forwardZ * 2.2,
+        x: spawnX,
+        y: spawnY,
+        z: spawnZ,
         rotY: kart.rotY
       });
 
@@ -335,14 +342,18 @@ export class GameRoom {
       if (kart.ammo <= 0) kart.weapon = null;
     } else if (weaponType === WEAPON_TYPES.BOMB) {
       const projId = `bomb_${this.nextProjId++}`;
+      const spawnX = kart.x + forwardX * 2.0;
+      const spawnY = kartElevation + 1.2;
+      const spawnZ = kart.z + forwardZ * 2.0;
+
       this.projectiles.set(projId, {
         id: projId,
         type: WEAPON_TYPES.BOMB,
         ownerId: kart.id,
         ownerName: kart.name,
-        x: kart.x + forwardX * 2.0,
-        y: 1.2,
-        z: kart.z + forwardZ * 2.0,
+        x: spawnX,
+        y: spawnY,
+        z: spawnZ,
         vx: forwardX * config.speed,
         vy: 8.5, // upward lob
         vz: forwardZ * config.speed,
@@ -357,9 +368,9 @@ export class GameRoom {
         id: projId,
         type: WEAPON_TYPES.BOMB,
         ownerId: kart.id,
-        x: kart.x + forwardX * 2.0,
-        y: 1.2,
-        z: kart.z + forwardZ * 2.0
+        x: spawnX,
+        y: spawnY,
+        z: spawnZ
       });
 
       kart.ammo--;
@@ -370,18 +381,22 @@ export class GameRoom {
       const angle = kart.rotY + spread;
       const fx = Math.sin(angle);
       const fz = Math.cos(angle);
+      const spawnX = kart.x + fx * 2.0;
+      const spawnY = kartElevation + 0.75;
+      const spawnZ = kart.z + fz * 2.0;
 
       this.projectiles.set(projId, {
         id: projId,
         type: WEAPON_TYPES.GATLING,
         ownerId: kart.id,
         ownerName: kart.name,
-        x: kart.x + fx * 2.0,
-        y: 0.7,
-        z: kart.z + fz * 2.0,
+        x: spawnX,
+        y: spawnY,
+        z: spawnZ,
         vx: fx * config.speed,
         vy: 0,
         vz: fz * config.speed,
+        rotY: angle,
         lifetime: config.lifetime,
         damage: config.damage,
         radius: config.radius,
@@ -392,9 +407,10 @@ export class GameRoom {
         id: projId,
         type: WEAPON_TYPES.GATLING,
         ownerId: kart.id,
-        x: kart.x + fx * 2.0,
-        y: 0.7,
-        z: kart.z + fz * 2.0
+        x: spawnX,
+        y: spawnY,
+        z: spawnZ,
+        rotY: angle
       });
 
       kart.ammo--;
