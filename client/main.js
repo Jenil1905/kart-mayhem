@@ -364,8 +364,25 @@ class KartMayhemClient {
     const urlParams = new URLSearchParams(window.location.search);
     const roomFromUrl = urlParams.get('room');
     if (roomFromUrl) {
-      if (joinCodeInput) joinCodeInput.value = roomFromUrl.toUpperCase();
-      if (joinModal) joinModal.classList.remove('hidden');
+      const code = roomFromUrl.trim().toUpperCase();
+      if (joinCodeInput) joinCodeInput.value = code;
+      const autoJoin = () => {
+        if (this.socket && this.socket.connected) {
+          sounds.ensureContext();
+          this.socket.emit('join_room', { roomId: code, profile: this.profile }, (res) => {
+            if (res && res.success) {
+              this.roomId = res.roomId;
+              if (joinModal) joinModal.classList.add('hidden');
+              this.ui.updateRoomCode(this.roomId);
+              this.startMatchUI();
+              this.ui.showAlert(`JOINED PRIVATE ROOM: ${this.roomId}`, 2500);
+            }
+          });
+        } else {
+          setTimeout(autoJoin, 200);
+        }
+      };
+      setTimeout(autoJoin, 300);
     }
 
     // Room Created Modal Elements
@@ -409,7 +426,7 @@ class KartMayhemClient {
       });
     }
 
-    // Create Room - Prominently displays Room Code and Copyable Invite Link
+    // Create Room - Prominently launches game with instant room invite link copied
     if (createRoomBtn) {
       createRoomBtn.addEventListener('click', () => {
         sounds.ensureContext();
@@ -422,9 +439,16 @@ class KartMayhemClient {
             window.history.replaceState({}, '', `?room=${this.roomId}`);
             this.ui.updateRoomCode(this.roomId);
 
+            if (navigator.clipboard) {
+              navigator.clipboard.writeText(inviteUrl).catch(() => {});
+            }
+
             if (createdRoomCodeBadge) createdRoomCodeBadge.textContent = this.roomId;
             if (createdRoomLinkInput) createdRoomLinkInput.value = inviteUrl;
-            if (roomCreatedModal) roomCreatedModal.classList.remove('hidden');
+            if (roomCreatedModal) roomCreatedModal.classList.add('hidden');
+
+            this.startMatchUI();
+            this.ui.showAlert(`👑 PRIVATE ROOM: ${this.roomId} (Invite Link Copied!)`, 3500);
           } else {
             alert('Failed to create room. Please try again.');
           }
@@ -791,19 +815,24 @@ class KartMayhemClient {
         myMesh.rlWheel.rotation.x += spinSpeed;
         myMesh.rrWheel.rotation.x += spinSpeed;
 
-        // Spawn exhaust particles
-        const forwardDir = new THREE.Vector3(Math.sin(physicsState.rotY), 0, Math.cos(physicsState.rotY));
-        if (Math.abs(physicsState.speed) > 1 || physicsState.isBoosting) {
-          const exPos = new THREE.Vector3(
-            physicsState.x - forwardDir.x * 1.3,
-            physicsState.y + 0.4,
-            physicsState.z - forwardDir.z * 1.3
-          );
-          this.particles.spawnExhaust(exPos, forwardDir, physicsState.isBoosting);
+        // Spawn exhaust particles (throttled to save CPU/GPU cycles)
+        this.exhaustTimer = (this.exhaustTimer || 0) + dt;
+        if (this.exhaustTimer > 0.08) {
+          this.exhaustTimer = 0;
+          const forwardDir = new THREE.Vector3(Math.sin(physicsState.rotY), 0, Math.cos(physicsState.rotY));
+          if (Math.abs(physicsState.speed) > 1 || physicsState.isBoosting) {
+            const exPos = new THREE.Vector3(
+              physicsState.x - forwardDir.x * 1.3,
+              physicsState.y + 0.4,
+              physicsState.z - forwardDir.z * 1.3
+            );
+            this.particles.spawnExhaust(exPos, forwardDir, physicsState.isBoosting);
+          }
         }
 
         // Spawn drift sparks
         if (this.physics.isDrifting && physicsState.driftTier > 0) {
+          const forwardDir = new THREE.Vector3(Math.sin(physicsState.rotY), 0, Math.cos(physicsState.rotY));
           const sparkPos = new THREE.Vector3(
             physicsState.x - forwardDir.x * 1.1,
             physicsState.y + 0.3,

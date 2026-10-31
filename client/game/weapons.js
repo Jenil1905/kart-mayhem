@@ -53,11 +53,6 @@ export class WeaponVisuals {
       flare.rotation.x = -Math.PI / 2;
       flare.position.z = -0.95;
       group.add(flare);
-
-      // Light glow
-      const rocketLight = new THREE.PointLight(0xff6d00, 1.5, 6.0);
-      rocketLight.position.z = -0.6;
-      group.add(rocketLight);
     } else if (type === 'BOMB') {
       // Spiked Bomb Sphere
       const bombGeo = new THREE.SphereGeometry(0.6, 12, 12);
@@ -150,11 +145,6 @@ export class WeaponVisuals {
         spike.position.set(Math.cos(theta) * 0.8, 0.14, Math.sin(theta) * 0.8);
         group.add(spike);
       }
-
-      // Point Light for authentic radiant glow
-      const glowLight = new THREE.PointLight(mineColor, 1.6, 6.0);
-      glowLight.position.y = 0.45;
-      group.add(glowLight);
     }
 
     return group;

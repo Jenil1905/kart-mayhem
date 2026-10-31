@@ -4,26 +4,35 @@ export class ParticleManager {
   constructor(scene) {
     this.scene = scene;
     this.particles = [];
+    this.maxParticles = 45;
+    this.sharedSphereGeo = new THREE.SphereGeometry(1, 4, 4);
+    this.sharedBoxGeo = new THREE.BoxGeometry(0.14, 0.14, 0.14);
   }
 
   // Exhaust smoke
   spawnExhaust(pos, dir, isBoost = false) {
-    const count = isBoost ? 3 : 1;
+    while (this.particles.length >= this.maxParticles) {
+      const old = this.particles.shift();
+      this.scene.remove(old.mesh);
+      if (old.mat) old.mat.dispose();
+    }
+
+    const count = isBoost ? 2 : 1;
     for (let i = 0; i < count; i++) {
-      const size = isBoost ? 0.35 + Math.random() * 0.25 : 0.15 + Math.random() * 0.15;
-      const geo = new THREE.SphereGeometry(size, 4, 4);
+      const size = isBoost ? 0.35 : 0.18;
       const color = isBoost ? 0x00e5ff : 0x888888;
       const mat = new THREE.MeshBasicMaterial({
         color,
         transparent: true,
         opacity: isBoost ? 0.8 : 0.45
       });
-      const mesh = new THREE.Mesh(geo, mat);
+      const mesh = new THREE.Mesh(this.sharedSphereGeo, mat);
+      mesh.scale.set(size, size, size);
 
       mesh.position.set(
-        pos.x + (Math.random() - 0.5) * 0.3,
-        pos.y + (Math.random() - 0.5) * 0.15,
-        pos.z + (Math.random() - 0.5) * 0.3
+        pos.x + (Math.random() - 0.5) * 0.25,
+        pos.y + (Math.random() - 0.5) * 0.1,
+        pos.z + (Math.random() - 0.5) * 0.25
       );
 
       this.scene.add(mesh);
@@ -34,28 +43,33 @@ export class ParticleManager {
         vy: 0.8 + Math.random() * 0.5,
         vz: -dir.z * (isBoost ? 6 : 2) + (Math.random() - 0.5) * 0.5,
         growth: 1.05,
-        maxLife: isBoost ? 0.4 : 0.6,
-        life: isBoost ? 0.4 : 0.6
+        maxLife: isBoost ? 0.35 : 0.45,
+        life: isBoost ? 0.35 : 0.45
       });
     }
   }
 
   // Drift sparks
   spawnDriftSparks(pos, tier = 1) {
+    while (this.particles.length >= this.maxParticles) {
+      const old = this.particles.shift();
+      this.scene.remove(old.mesh);
+      if (old.mat) old.mat.dispose();
+    }
+
     let color = 0x00e5ff; // tier 1 blue
     if (tier === 2) color = 0x9d00ff; // tier 2 purple
     if (tier === 3) color = 0xff6600; // tier 3 flame orange
 
-    for (let i = 0; i < 4; i++) {
-      const geo = new THREE.BoxGeometry(0.12, 0.12, 0.12);
+    for (let i = 0; i < 2; i++) {
       const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9 });
-      const mesh = new THREE.Mesh(geo, mat);
+      const mesh = new THREE.Mesh(this.sharedBoxGeo, mat);
 
       mesh.position.copy(pos);
       this.scene.add(mesh);
 
       const angle = Math.random() * Math.PI * 2;
-      const speed = 2 + Math.random() * 4;
+      const speed = 2 + Math.random() * 3;
 
       this.particles.push({
         mesh,

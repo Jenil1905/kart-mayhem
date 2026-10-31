@@ -81,7 +81,26 @@ io.on('connection', (socket) => {
     socket.emit('pong_check');
   });
 
+  function leaveCurrentRoom(sock) {
+    const currentRoomId = socketToRoom.get(sock.id);
+    if (currentRoomId) {
+      const room = rooms.get(currentRoomId);
+      if (room) {
+        room.removePlayer(sock.id);
+        if (room.players.size === 0) {
+          room.cleanup();
+          rooms.delete(currentRoomId);
+          console.log(`[Room Cleaned] ${currentRoomId}`);
+        }
+      }
+      sock.leave(currentRoomId);
+      socketToRoom.delete(sock.id);
+    }
+  }
+
   socket.on('create_room', (data = {}, callback) => {
+    leaveCurrentRoom(socket);
+
     let roomId = generateRoomCode();
     while (rooms.has(roomId)) {
       roomId = generateRoomCode();
@@ -107,6 +126,8 @@ io.on('connection', (socket) => {
 
   // Join existing room
   socket.on('join_room', (data = {}, callback) => {
+    leaveCurrentRoom(socket);
+
     const roomId = (data.roomId || '').toUpperCase().trim();
     let room = rooms.get(roomId);
 
@@ -133,6 +154,8 @@ io.on('connection', (socket) => {
 
   // Quick Play (matchmake into open PUBLIC room with NPCs, or create new public room)
   socket.on('quick_play', (data = {}, callback) => {
+    leaveCurrentRoom(socket);
+
     let targetRoom = null;
 
     // Find any public room with bots

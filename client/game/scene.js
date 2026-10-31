@@ -15,9 +15,9 @@ export class ArenaScene {
       powerPreference: 'high-performance'
     });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
 
     this.camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 400);
     this.camera.position.set(0, 10, -20);
@@ -41,8 +41,8 @@ export class ArenaScene {
     const sunLight = new THREE.DirectionalLight(0xfff7e6, 1.8);
     sunLight.position.set(45, 80, 50);
     sunLight.castShadow = true;
-    sunLight.shadow.mapSize.width = 2048;
-    sunLight.shadow.mapSize.height = 2048;
+    sunLight.shadow.mapSize.width = 1024;
+    sunLight.shadow.mapSize.height = 1024;
     sunLight.shadow.camera.near = 10;
     sunLight.shadow.camera.far = 250;
     const d = 95;
